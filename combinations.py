@@ -19,4 +19,4 @@ OR
 
 for comb in coeficients:
     p = np.poly1d(comb)
-    roots += n
+    roots += p.r
