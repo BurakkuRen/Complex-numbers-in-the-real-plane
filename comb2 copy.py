@@ -2,7 +2,7 @@ import itertools
 import numpy as np
 import sqlite3
 
-db = sqlite3.connect('combinations_1.db')
+db = sqlite3.connect('combinations_8_6.db')
 index = 0
 c = db.cursor()
 c.execute('''
@@ -14,8 +14,10 @@ c.execute('''
     COEF INTEGER
   )''')
 db.commit()
-grado = 10
-coeficiente = 10
+grado = 8
+coeficiente = 6
+
+pending = []
 
 def products(grado,coeficiente):
   rangoCoef = [x for x in range(-coeficiente,coeficiente+1)]
@@ -23,12 +25,17 @@ def products(grado,coeficiente):
   return "a"
 
 def Process(product):
-  global index
+  global index, pending
   p = np.poly1d(product)
   grado = len(product) - 1 - CountZeroes(product)
   coef = abs(max(product, key=abs))
   for n in p.r:
-    InsertIntoDataBase(np.real(n), np.imag(n), grado, coef)
+    pending.append((np.real(n), np.imag(n), grado, coef))
+    if index % 10000 == 0:
+      print(index)
+    if (index % 1000000 == 0):
+      InsertIntoDataBase(pending)
+      pending = []
     index += 1
 
 def CountZeroes(inputList):
@@ -40,12 +47,11 @@ def CountZeroes(inputList):
   
   return count
 
-def InsertIntoDataBase(real, imag, grado, coef):
+def InsertIntoDataBase(inList):
   global c, db
-  c.execute("INSERT INTO combinaciones VALUES (NULL, ?, ?, ?, ?)", [real, imag, grado, coef])
+  c.executemany("INSERT INTO combinaciones VALUES (NULL, ?, ?, ?, ?)", inList)
   db.commit()
 
-  print(index)
 
 products(grado, coeficiente)
 db.close()
